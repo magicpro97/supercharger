@@ -9,6 +9,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_webservice/places.dart';
 import 'package:location/location.dart' as lc;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supercharger/generated/assets.dart';
 
 import 'main.dart';
 
@@ -16,7 +17,7 @@ class HomePage extends StatefulWidget {
   const HomePage({Key? key}) : super(key: key);
 
   @override
-  _HomePageState createState() => _HomePageState();
+  State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
@@ -26,7 +27,7 @@ class _HomePageState extends State<HomePage> {
   late bool _serviceEnabled;
   late lc.PermissionStatus _permissionGranted;
 
-  var _searchLocation = '';
+  var _searchLocation = 'Search something';
   Set<Marker> _markers = {};
   var _currentLatLng = const LatLng(0, 0);
   var _currentCountryCode = '';
@@ -34,22 +35,24 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    Future.wait([
-      _initLocation(),
-      _getMarkers(),
-      _getCurrentCountryCode(),
-    ]).then((data) {
-      setState(() {
-        _currentLatLng = data[0] as LatLng;
-        _markers = data[1] as Set<Marker>;
-        _currentCountryCode = data[2] as String;
-      });
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      Future.wait([
+        _initLocation(),
+        _getMarkers(MediaQuery.of(context).devicePixelRatio),
+        _getCurrentCountryCode(),
+      ]).then((data) {
+        setState(() {
+          _currentLatLng = data[0] as LatLng;
+          _markers = data[1] as Set<Marker>;
+          _currentCountryCode = data[2] as String;
+        });
 
-      _mapController.animateCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(target: _currentLatLng, zoom: 12),
-        ),
-      );
+        _mapController.moveCamera(
+          CameraUpdate.newCameraPosition(
+            CameraPosition(target: _currentLatLng, zoom: 12),
+          ),
+        );
+      });
     });
   }
 
@@ -112,11 +115,18 @@ class _HomePageState extends State<HomePage> {
     return jsonDecode(data) as List;
   }
 
-  Future<Set<Marker>> _getMarkers() async {
+  Future<Set<Marker>> _getMarkers(double devicePixelRatio) async {
     var data = await _getData() ?? await _fetchData();
     if (data == null) {
       return {};
     }
+
+    var icon = await BitmapDescriptor.fromAssetImage(
+      ImageConfiguration(
+        devicePixelRatio: devicePixelRatio,
+      ),
+      Assets.iconsElectricCharge,
+    );
 
     return data
         .map(
@@ -126,6 +136,7 @@ class _HomePageState extends State<HomePage> {
               double.parse(location['latitude'].toString()),
               double.parse(location['longitude'].toString()),
             ),
+            icon: icon,
           ),
         )
         .toSet();
@@ -133,6 +144,14 @@ class _HomePageState extends State<HomePage> {
 
   void _onMapCreated(GoogleMapController controller) {
     _mapController = controller;
+  }
+
+  void _animateToCurrentPosition() {
+    _mapController.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(target: _currentLatLng, zoom: 12),
+      ),
+    );
   }
 
   @override
@@ -147,13 +166,36 @@ class _HomePageState extends State<HomePage> {
             GoogleMap(
               mapType: MapType.normal,
               initialCameraPosition: CameraPosition(target: _currentLatLng),
-              mapToolbarEnabled: true,
-              myLocationEnabled: true,
-              myLocationButtonEnabled: true,
               markers: _markers,
+              myLocationEnabled: true,
+              myLocationButtonEnabled: false,
               onMapCreated: _onMapCreated,
             ),
-
+            Positioned(
+              bottom: 20,
+              left: 10,
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  boxShadow: [
+                    BoxShadow(
+                      offset: Offset(.5, .5),
+                      blurRadius: .5,
+                      spreadRadius: .3,
+                    )
+                  ],
+                ),
+                child: IconButton(
+                  onPressed: _animateToCurrentPosition,
+                  icon: const Icon(
+                    Icons.my_location,
+                    color: Colors.black54,
+                  ),
+                ),
+              ),
+            ),
             //search autoconplete input
             Positioned(
               //search input bar
@@ -172,10 +214,11 @@ class _HomePageState extends State<HomePage> {
                         lat: location.latitude!,
                         lng: location.longitude!,
                       ),
-                      components: _currentCountryCode.isNotEmpty ? [
-                        Component(Component.country, _currentCountryCode),
-                      ] : null,
-                      hint: 'Searches for',
+                      components: _currentCountryCode.isNotEmpty
+                          ? [
+                              Component(Component.country, _currentCountryCode),
+                            ]
+                          : null,
                       //google_map_webservice package
                       onError: (err) {
                         print(err);

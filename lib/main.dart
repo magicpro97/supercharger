@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:supercharger/splash_page.dart';
 
 import 'home_page.dart';
 
@@ -25,7 +26,10 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const HomePage(),
+      home: const SplashPage(),
+      routes: {
+        '/home': (_) => const HomePage(),
+      },
     );
   }
 }
