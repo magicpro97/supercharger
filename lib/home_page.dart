@@ -29,14 +29,20 @@ class _HomePageState extends State<HomePage> {
   var _searchLocation = '';
   Set<Marker> _markers = {};
   var _currentLatLng = const LatLng(0, 0);
+  var _currentCountryCode = '';
 
   @override
   void initState() {
     super.initState();
-    Future.wait([_initLocation(), _getMarkers()]).then((data) {
+    Future.wait([
+      _initLocation(),
+      _getMarkers(),
+      _getCurrentCountryCode(),
+    ]).then((data) {
       setState(() {
         _currentLatLng = data[0] as LatLng;
         _markers = data[1] as Set<Marker>;
+        _currentCountryCode = data[2] as String;
       });
 
       _mapController.animateCamera(
@@ -45,6 +51,16 @@ class _HomePageState extends State<HomePage> {
         ),
       );
     });
+  }
+
+  Future<String> _getCurrentCountryCode() async {
+    final response = await Dio().get('http://ip-api.com/json');
+
+    if (response.statusCode == 200) {
+      return response.data['countryCode'];
+    }
+
+    return '';
   }
 
   Future<LatLng> _initLocation() async {
@@ -156,6 +172,9 @@ class _HomePageState extends State<HomePage> {
                         lat: location.latitude!,
                         lng: location.longitude!,
                       ),
+                      components: _currentCountryCode.isNotEmpty ? [
+                        Component(Component.country, _currentCountryCode),
+                      ] : null,
                       hint: 'Searches for',
                       //google_map_webservice package
                       onError: (err) {
