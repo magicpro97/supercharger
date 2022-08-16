@@ -1,6 +1,10 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supercharger/tesla_location.dart';
+import 'package:supercharger/usecases/fetch_location_data_use_case.dart';
+import 'package:supercharger/usecases/get_location_data_use_case.dart';
+import 'package:supercharger/usecases/save_location_data_use_case.dart';
 
 import 'generated/assets.dart';
 
@@ -17,14 +21,40 @@ class _SplashPageState extends State<SplashPage> {
   @override
   void initState() {
     super.initState();
-    FlutterNativeSplash.remove();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Future.delayed(const Duration(seconds: 3), () {
-        Navigator.pushReplacementNamed(context, '/home');
-      });
+
+    _initialize().then((_) {
+      Navigator.pushReplacementNamed(context, '/home');
     });
 
     _image = Image.asset(Assets.iconsElectricCharge);
+  }
+
+  Future<void> _initialize() async {
+    List<TeslaLocation> locations =
+        await GetLocationDataUseCase().getTeslaLocation();
+
+    if (locations.isEmpty && await shouldUpdate()) {
+      final locations = await FetchLocationDataUseCase().fetchTeslaLocation();
+      await SaveLocationDataUseCase().saveTeslaLocation(locations);
+    }
+    FlutterNativeSplash.remove();
+  }
+
+  Future<bool> shouldUpdate() async {
+    final sharePreferences = await SharedPreferences.getInstance();
+    final lastUpdated = sharePreferences.getInt("LAST_UPDATED");
+    if (lastUpdated != null) {
+      DateTime lastUpdatedDate =
+          DateTime.fromMillisecondsSinceEpoch(lastUpdated);
+
+      if (lastUpdatedDate.difference(DateTime.now()).inDays < 0) {
+        return true;
+      }
+    } else {
+      return true;
+    }
+
+    return false;
   }
 
   @override

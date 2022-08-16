@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -8,8 +7,8 @@ import 'package:google_api_headers/google_api_headers.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_webservice/places.dart';
 import 'package:location/location.dart' as lc;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supercharger/generated/assets.dart';
+import 'package:supercharger/usecases/get_location_data_use_case.dart';
 
 import 'main.dart';
 
@@ -31,6 +30,7 @@ class _HomePageState extends State<HomePage> {
   Set<Marker> _markers = {};
   var _currentLatLng = const LatLng(0, 0);
   var _currentCountryCode = '';
+  var _isLoading = true;
 
   @override
   void initState() {
@@ -45,6 +45,7 @@ class _HomePageState extends State<HomePage> {
           _currentLatLng = data[0] as LatLng;
           _markers = data[1] as Set<Marker>;
           _currentCountryCode = data[2] as String;
+          _isLoading = false;
         });
 
         _mapController.moveCamera(
@@ -88,53 +89,22 @@ class _HomePageState extends State<HomePage> {
     return LatLng(location.latitude!, location.longitude!);
   }
 
-  Future<List<dynamic>?> _fetchData() async {
-    final dio = Dio();
-    final response = await dio.get(
-        "https://www.tesla.com/cua-api/tesla-locations?translate=en_US&usetrt=true");
-    if (response.statusCode != 200) {
-      return null;
-    }
-
-    final shared = await SharedPreferences.getInstance();
-
-    final teslaLocations = jsonEncode(response.data);
-    shared.setString('TESLA_LOCATIONS', teslaLocations);
-
-    return response.data as List;
-  }
-
-  Future<List<dynamic>?> _getData() async {
-    final shared = await SharedPreferences.getInstance();
-
-    final data = shared.getString('TESLA_LOCATIONS');
-    if (data == null) {
-      return null;
-    }
-
-    return jsonDecode(data) as List;
-  }
-
   Future<Set<Marker>> _getMarkers(double devicePixelRatio) async {
-    var data = await _getData() ?? await _fetchData();
-    if (data == null) {
-      return {};
-    }
+    var data = await GetLocationDataUseCase().getTeslaLocation();
 
     var icon = await BitmapDescriptor.fromAssetImage(
       ImageConfiguration(
-        devicePixelRatio: devicePixelRatio,
-      ),
+          devicePixelRatio: devicePixelRatio, size: const Size(24, 24)),
       Assets.iconsElectricCharge,
     );
 
     return data
         .map(
           (location) => Marker(
-            markerId: MarkerId(location['location_id']),
+            markerId: MarkerId(location.locationId),
             position: LatLng(
-              double.parse(location['latitude'].toString()),
-              double.parse(location['longitude'].toString()),
+              location.latitude,
+              location.longitude,
             ),
             icon: icon,
           ),
@@ -268,6 +238,18 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
+            Visibility(
+              visible: _isLoading,
+              child: Positioned.fill(
+                child: Container(
+                  alignment: Alignment.center,
+                  color: Colors.white.withOpacity(0.7),
+                  child: const SizedBox(
+                    child: CircularProgressIndicator.adaptive(),
+                  ),
+                ),
+              ),
+            )
           ],
         ),
       ),

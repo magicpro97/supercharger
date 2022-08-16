@@ -1,0 +1,92 @@
+{
+  "_note1": "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
+  "_note2": "ObjectBox manages crucial IDs for your object model. See docs for details.",
+  "_note3": "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs.",
+  "entities": [
+    {
+      "id": "1:6292691550248032023",
+      "lastPropertyId": "13:7618179066044662348",
+      "name": "TeslaLocationEntity",
+      "properties": [
+        {
+          "id": "1:9113128948382811779",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:5784624633833055832",
+          "name": "locationType",
+          "type": 30
+        },
+        {
+          "id": "3:2793788858384654038",
+          "name": "locationId",
+          "type": 9
+        },
+        {
+          "id": "4:2436540623859377844",
+          "name": "latitude",
+          "type": 8
+        },
+        {
+          "id": "5:8897092078196447924",
+          "name": "longitude",
+          "type": 8
+        },
+        {
+          "id": "6:3314766507467537857",
+          "name": "openSoon",
+          "type": 9
+        },
+        {
+          "id": "7:3634238004837080833",
+          "name": "title",
+          "type": 9
+        },
+        {
+          "id": "8:8793520768844131005",
+          "name": "directionsLink",
+          "type": 9
+        },
+        {
+          "id": "9:6574406682392824474",
+          "name": "addressLine1",
+          "type": 9
+        },
+        {
+          "id": "10:8732271216614153138",
+          "name": "addressLine2",
+          "type": 9
+        },
+        {
+          "id": "11:7094888501722292578",
+          "name": "city",
+          "type": 9
+        },
+        {
+          "id": "12:7369585125083836821",
+          "name": "provinceState",
+          "type": 9
+        },
+        {
+          "id": "13:7618179066044662348",
+          "name": "postalCode",
+          "type": 9
+        }
+      ],
+      "relations": []
+    }
+  ],
+  "lastEntityId": "1:6292691550248032023",
+  "lastIndexId": "0:0",
+  "lastRelationId": "0:0",
+  "lastSequenceId": "0:0",
+  "modelVersion": 5,
+  "modelVersionParserMinimum": 5,
+  "retiredEntityUids": [],
+  "retiredIndexUids": [],
+  "retiredPropertyUids": [],
+  "retiredRelationUids": [],
+  "version": 1
+}
