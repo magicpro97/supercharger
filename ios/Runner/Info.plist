@@ -58,5 +58,7 @@
             <string>googlechromes</string>
             <string>comgooglemaps</string>
         </array>
-	</dict>
+		<key>CADisableMinimumFrameDurationOnPhone</key>
+	<true/>
+</dict>
 </plist>

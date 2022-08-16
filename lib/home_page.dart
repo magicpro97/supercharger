@@ -10,6 +10,7 @@ import 'package:google_maps_webservice/places.dart';
 import 'package:location/location.dart' as lc;
 import 'package:supercharger/generated/assets.dart';
 import 'package:supercharger/tesla_location.dart';
+import 'package:supercharger/usecases/fetch_location_detail_use_case.dart';
 import 'package:supercharger/usecases/get_charger_location_data_use_case.dart';
 import 'package:supercharger/usecases/launch_map_use_case.dart';
 
@@ -117,25 +118,51 @@ class _HomePageState extends State<HomePage> {
         .toSet();
   }
 
-  void _onTapLocation(TeslaLocation location) {
-    showModalBottomSheet(
-      context: context,
-      builder: (_) => SizedBox(
-        height: 100,
-        child: ListTile(
-          leading: Image.asset(Assets.iconsElectricCharge),
-          title: Text(location.locationType.first.capitalize()),
-          subtitle: Text('${location.latitude}, ${location.longitude}'),
-          trailing: IconButton(
-              onPressed: () =>
-                  _launchMaps(location.latitude, location.longitude),
-              icon: const Icon(
-                Icons.directions,
-                color: Colors.blue,
-              )),
+  void _onTapLocation(TeslaLocation location) async {
+    final detail = await FetchLocationDataDetailUseCase()
+        .fetchTeslaLocationDetails(location.locationId);
+
+    if (detail == null) {
+      showModalBottomSheet(
+        context: context,
+        builder: (_) => SizedBox(
+          height: 100,
+          child: ListTile(
+            leading: Image.asset(Assets.iconsElectricCharge),
+            title: Text(location.locationType.first.capitalize()),
+            subtitle: Text('${location.latitude}, ${location.longitude}'),
+            trailing: IconButton(
+                onPressed: () =>
+                    _launchMaps(location.latitude, location.longitude),
+                icon: const Icon(
+                  Icons.directions,
+                  color: Colors.blue,
+                )),
+          ),
         ),
-      ),
-    );
+      );
+    } else {
+      showModalBottomSheet(
+        context: context,
+        builder: (_) => SizedBox(
+          height: 100,
+          child: ListTile(
+            leading: detail.destinationChargerLogo!.isNotEmpty
+                ? Image.network(detail.destinationChargerLogo!)
+                : Image.asset(Assets.iconsElectricCharge),
+            title: Text(detail.title.capitalize()),
+            subtitle: Text(detail.address),
+            trailing: IconButton(
+                onPressed: () =>
+                    _launchMaps(location.latitude, location.longitude),
+                icon: const Icon(
+                  Icons.directions,
+                  color: Colors.blue,
+                )),
+          ),
+        ),
+      );
+    }
   }
 
   void _onMapCreated(GoogleMapController controller) {
