@@ -3,12 +3,15 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_google_places_hoc081098/flutter_google_places_hoc081098.dart';
+import 'package:flutter_native_splash/cli_commands.dart';
 import 'package:google_api_headers/google_api_headers.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_webservice/places.dart';
 import 'package:location/location.dart' as lc;
 import 'package:supercharger/generated/assets.dart';
-import 'package:supercharger/usecases/get_location_data_use_case.dart';
+import 'package:supercharger/tesla_location.dart';
+import 'package:supercharger/usecases/get_charger_location_data_use_case.dart';
+import 'package:supercharger/usecases/launch_map_use_case.dart';
 
 import 'main.dart';
 
@@ -90,26 +93,49 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<Set<Marker>> _getMarkers(double devicePixelRatio) async {
-    var data = await GetLocationDataUseCase().getTeslaLocation();
+    var data = await GetChargerLocationDataUseCase().getTeslaChargerLocation();
 
     var icon = await BitmapDescriptor.fromAssetImage(
       ImageConfiguration(
-          devicePixelRatio: devicePixelRatio, size: const Size(24, 24)),
+        devicePixelRatio: devicePixelRatio,
+        size: const Size(24, 24),
+      ),
       Assets.iconsElectricCharge,
     );
 
     return data
         .map(
           (location) => Marker(
-            markerId: MarkerId(location.locationId),
-            position: LatLng(
-              location.latitude,
-              location.longitude,
-            ),
-            icon: icon,
-          ),
+              markerId: MarkerId(location.locationId),
+              position: LatLng(
+                location.latitude,
+                location.longitude,
+              ),
+              icon: icon,
+              onTap: () => _onTapLocation(location)),
         )
         .toSet();
+  }
+
+  void _onTapLocation(TeslaLocation location) {
+    showModalBottomSheet(
+      context: context,
+      builder: (_) => SizedBox(
+        height: 100,
+        child: ListTile(
+          leading: Image.asset(Assets.iconsElectricCharge),
+          title: Text(location.locationType.first.capitalize()),
+          subtitle: Text('${location.latitude}, ${location.longitude}'),
+          trailing: IconButton(
+              onPressed: () =>
+                  _launchMaps(location.latitude, location.longitude),
+              icon: const Icon(
+                Icons.directions,
+                color: Colors.blue,
+              )),
+        ),
+      ),
+    );
   }
 
   void _onMapCreated(GoogleMapController controller) {
@@ -122,6 +148,10 @@ class _HomePageState extends State<HomePage> {
         CameraPosition(target: _currentLatLng, zoom: 12),
       ),
     );
+  }
+
+  void _launchMaps(double latitude, double longitude) {
+    LaunchMapUseCase().launchMap(latitude, longitude);
   }
 
   @override

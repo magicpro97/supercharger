@@ -41,6 +41,7 @@ dependencies:
   flutter_native_splash: ^2.2.7
   objectbox: ^1.6.0
   objectbox_flutter_libs:
+  url_launcher:
 
 dev_dependencies:
   flutter_test:

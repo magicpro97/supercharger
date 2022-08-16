@@ -3,14 +3,23 @@ import 'package:supercharger/tesla_location_entity.dart';
 
 import '../objectbox.g.dart';
 
-class SaveLocationDataUseCase {
-  Future<void> saveTeslaLocation(List<TeslaLocation> locations) async {
+class GetChargerLocationDataUseCase {
+  Future<List<TeslaLocation>> getTeslaChargerLocation() async {
     final store = await openStore();
     final box = store.box<TeslaLocationEntity>();
 
-    box.removeAll();
-    box.putMany(locations
-        .map((e) => TeslaLocationEntity(
+    final entities = box
+        .query(TeslaLocationEntity_.locationType.contains('supercharger').or(
+            TeslaLocationEntity_.locationType
+                .contains('destination charger')
+                .or(TeslaLocationEntity_.locationType
+                    .contains('standard charger'))))
+        .build()
+        .find();
+
+    store.close();
+    return entities
+        .map((e) => TeslaLocation(
               addressLine2: e.addressLine2,
               city: e.city,
               openSoon: e.openSoon,
@@ -24,8 +33,6 @@ class SaveLocationDataUseCase {
               addressLine1: e.addressLine1,
               directionsLink: e.directionsLink,
             ))
-        .toList());
-
-    store.close();
+        .toList();
   }
 }

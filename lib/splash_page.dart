@@ -36,6 +36,12 @@ class _SplashPageState extends State<SplashPage> {
     if (locations.isEmpty && await shouldUpdate()) {
       final locations = await FetchLocationDataUseCase().fetchTeslaLocation();
       await SaveLocationDataUseCase().saveTeslaLocation(locations);
+
+      final sharePreferences = await SharedPreferences.getInstance();
+      sharePreferences.setInt(
+        "LAST_UPDATED",
+        DateTime.now().millisecondsSinceEpoch,
+      );
     }
     FlutterNativeSplash.remove();
   }
